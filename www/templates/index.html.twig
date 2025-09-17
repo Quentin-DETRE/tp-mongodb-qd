@@ -2,6 +2,8 @@
 
 {% block title %}Index{% endblock %}
 {% block content %}
+
+    <a href="create.php">Ajouter un livre</a>
 <h1>Liste des manuscrits de la bibliothèque du Patrimoine de Clermont Auvergne Métropole</h1>
 <table>
     <tr>
@@ -12,10 +14,10 @@
     </tr>
     {% for document in list %}
     <tr>
-        <td>{{ document.name }}</td>
-        <td>{{ document.name }}</td>
-        <td>{{ document.name }}</td>
-        <td><a href="get.php?id=1">voir</a>&nbsp;/&nbsp;<a href="edit.php?id=1">éditer</a>&nbsp;/&nbsp;<a href="delete.php?id=1">supprimer</a></td>
+        <td>{{ document._id }}</td>
+        <td>{{ document.titre }}</td>
+        <td>{{ document.auteur }}</td>
+        <td><a href="get.php?id={{ document._id }}">voir</a>&nbsp;/&nbsp;<a href="edit.php?id={{ document._id }}">éditer</a>&nbsp;/&nbsp;<a href="delete.php?id={{ document._id }}">supprimer</a></td>
     </tr>
     {% endfor %}
 </table>

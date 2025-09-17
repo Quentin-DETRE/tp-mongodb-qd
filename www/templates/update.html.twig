@@ -7,13 +7,13 @@
         <input type="hidden" id="id" name="id" value="{{ entity._id }}">
 
         <label for="title">Titre :</label>
-        <input type="text" id="title" name="title" value="récupérez la valeur depuis mongodb" size="100">
+        <input type="text" id="titre" name="titre" value="{{ entity.titre }}" size="100">
 
         <label for="author">Auteur :</label>
-        <input type="text" id="author" name="author" size="50" value="récupérez la valeur depuis mongodb">
+        <input type="text" id="auteur" name="auteur" size="50" value="{{ entity.auteur }}">
 
         <label for="author">Siècle :</label>
-        <input type="number" id="century" name="century" value="123456879">
+        <input type="number" id="siecle" name="siecle" value="{{ entity.siecle }}">
 
         <button type="submit">Enregistrer</button>
 </form>

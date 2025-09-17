@@ -13,6 +13,8 @@ $manager = getMongoDbManager();
 
 if (!empty($_POST)) {
     // @todo coder l'enregistrement d'un nouveau livre en lisant le contenu de $_POST
+    $manager->selectCollection('tp')->insertOne($_POST);
+    header('Location: index.php');
 } else {
 // render template
     try {
