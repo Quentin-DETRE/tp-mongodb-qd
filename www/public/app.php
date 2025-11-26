@@ -49,6 +49,26 @@ $list = $collection->find($filter, [
     'sort'  => ['titre' => 1]
 ])->toArray();
 
+$redis = getRedisClient();
+$key = 'bibliotheque_liste_livres'; // Clé unique pour cette donnée
+
+// Tentative de récupération depuis le cache
+if ($redis && $redis->exists($key)) {
+    // On récupère le JSON et on le reconvertit en tableau PHP
+    $list = json_decode($redis->get($key), true);
+} else {
+    // Pas de cache : Requête MongoDB (Lent)
+    $collection = $manager->selectCollection('tp');
+    $list = $collection->find([], ['limit' => 10])->toArray();
+
+    // Mise en cache pour la prochaine fois (ex: expiration dans 60 secondes)
+    if ($redis) {
+        // Redis stocke des chaînes, on encode donc le tableau en JSON
+        $redis->set($key, json_encode($list));
+        $redis->expire($key, 60);
+    }
+}
+
 // render template
 try {
     echo $twig->render('index.html.twig', [
