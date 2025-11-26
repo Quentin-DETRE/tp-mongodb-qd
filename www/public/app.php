@@ -5,34 +5,45 @@ include_once '../init.php';
 use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
+// Important : pour la recherche "floue" (contient le mot)
+use MongoDB\BSON\Regex;
 
 $twig = getTwig();
 $manager = getMongoDbManager();
-
-// Configuration
-$limit = 10;
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $collection = $manager->selectCollection('tp');
 
-// Compter le total
-$totalDocuments = $collection->countDocuments([]);
+// Récupération des paramètres
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$search = isset($_GET['search']) ? $_GET['search'] : ''; // Récupère le mot-clé
+$limit = 10;
+
+// Construction du filtre de recherche
+$filter = [];
+
+if (!empty($search)) {
+    // Création d'une Regex insensible à la casse ('i')
+    // On cherche dans le Titre OU ($or) dans l'Auteur
+    $regex = new Regex($search, 'i');
+    $filter = [
+        '$or' => [
+            ['titre' => $regex],
+            ['auteur' => $regex]
+        ]
+    ];
+}
+
+// Comptage
+$totalDocuments = $collection->countDocuments($filter);
 $maxPages = ceil($totalDocuments / $limit);
 
-// Sécurité : Gestion des dépassements de page
-// Si on demande la page 0 ou moins, on force la 1
-if ($page < 1) {
-    $page = 1;
-}
-// Si on demande une page supérieure au max (ex: 192 sur 42), on force la dernière page
-if ($page > $maxPages && $maxPages > 0) {
-    $page = $maxPages;
-}
+// Sécurités de page
+if ($page < 1) $page = 1;
+if ($page > $maxPages && $maxPages > 0) $page = $maxPages;
 
-// Calcul du skip
 $skip = ($page - 1) * $limit;
 
 // Récupération des données
-$list = $collection->find([], [
+$list = $collection->find($filter, [
     'limit' => $limit,
     'skip'  => $skip,
     'sort'  => ['titre' => 1]
@@ -43,7 +54,8 @@ try {
     echo $twig->render('index.html.twig', [
         'list'     => $list,
         'page'     => $page,
-        'maxPages' => $maxPages
+        'maxPages' => $maxPages,
+        'search'   => $search // On renvoie le mot clé à la vue pour pré-remplir le champ
     ]);
 } catch (LoaderError|RuntimeError|SyntaxError $e) {
     echo $e->getMessage();

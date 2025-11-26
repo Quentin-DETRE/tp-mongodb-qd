@@ -1,14 +1,23 @@
 {% extends "base.html.twig" %}
 
-{% block title %}Index{% endblock %}
-
+{% block title %}Liste des livres{% endblock %}
 {% block content %}
-    <a href="create.php" class="btn-add">Ajouter un livre</a>
-    {# Page principale #}
-    <h1>Liste des manuscrits de la bibliothèque du Patrimoine de Clermont Auvergne Métropole</h1>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h1>Bibliothèque du Patrimoine</h1>
+        <a href="create.php" class="btn-add">Ajouter un livre</a>
+    </div>
+
+    {# FORMULAIRE DE RECHERCHE #}
+    <form action="" method="GET" >
+        <label for="search">Rechercher :</label>
+        <input type="text" name="search" id="search" value="{{ search }}" placeholder="Titre ou auteur...">
+        <button type="submit">Rechercher</button>
+        {% if search %}
+            <a href="?">Réinitialiser</a>
+        {% endif %}
+    </form>
 
     <table>
-        <caption>Table listant l'ensemble des entrées de la BDD</caption>
         <tr>
             <th>Référence</th>
             <th>Titre</th>
@@ -21,53 +30,50 @@
                 <td>{{ document.titre }}</td>
                 <td>{{ document.auteur }}</td>
                 <td>
-                    <a href="get.php?id={{ document._id }}">voir</a>&nbsp;/&nbsp;
-                    <a href="edit.php?id={{ document._id }}">éditer</a>&nbsp;/&nbsp;
+                    <a href="get.php?id={{ document._id }}">voir</a> /
+                    <a href="edit.php?id={{ document._id }}">éditer</a> /
                     <a href="delete.php?id={{ document._id }}">supprimer</a>
                 </td>
             </tr>
         {% else %}
             <tr>
-                <td colspan="4">Aucun manuscrit trouvé.</td>
+                <td colspan="4" style="text-align:center">Aucun résultat trouvé pour "{{ search }}".</td>
             </tr>
         {% endfor %}
     </table>
 
-    {# BARRE DE NAVIGATION #}
+    {# PAGINATION  #}
     {% if maxPages > 1 %}
-        <div class="pagination" style="margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 10px;">
+        <div class="pagination" style="margin-top: 20px; text-align: center; display: flex; justify-content: center; gap: 10px;">
 
-            {# Bouton Précédent #}
+            {# On ajoute &search={{ search }} à tous les liens #}
+
+            {# Boutons Précédents #}
             {% if page > 1 %}
-                <a href="?page=1" title="Première page">&laquo;&laquo;</a>
-                <a href="?page={{ page - 1 }}" title="Page précédente">&laquo; Précédent</a>
+                <a href="?page=1&search={{ search }}">&laquo;&laquo;</a>
+                <a href="?page={{ page - 1 }}&search={{ search }}">&laquo; Précédent</a>
             {% else %}
-                <span style="color: grey; opacity: 0.5;">&laquo;&laquo;</span>
-                <span style="color: grey; opacity: 0.5;">&laquo; Précédent</span>
+                <span style="color: grey;">&laquo;&laquo;</span>
+                <span style="color: grey;">&laquo; Précédent</span>
             {% endif %}
 
             {# Formulaire de saut direct #}
-            <form action="" method="GET" style="margin: 0;">
-                <label for="pageInput">Page :</label>
-                <input type="number"
-                       name="page"
-                       id="pageInput"
-                       value="{{ page }}"
-                       min="1"
-                       max="{{ maxPages }}"
-                       style="width: 50px; text-align: center;">
+            <form action="" method="GET" style="display: inline-block; margin: 0;">
+                {# On garde la recherche active même quand on saute de page #}
+                <input type="hidden" name="search" value="{{ search }}">
 
+                <input type="number" name="page" value="{{ page }}" min="1" max="{{ maxPages }}" style="width: 50px;">
                 <span> / {{ maxPages }}</span>
                 <button type="submit">Aller</button>
             </form>
 
-            {# Bouton Suivant #}
+            {# Boutons Suivants #}
             {% if page < maxPages %}
-                <a href="?page={{ page + 1 }}" title="Page suivante">Suivant &raquo;</a>
-                <a href="?page={{ maxPages }}" title="Dernière page">&raquo;&raquo;</a>
+                <a href="?page={{ page + 1 }}&search={{ search }}">Suivant &raquo;</a>
+                <a href="?page={{ maxPages }}&search={{ search }}">&raquo;&raquo;</a>
             {% else %}
-                <span style="color: grey; opacity: 0.5;">Suivant &raquo;</span>
-                <span style="color: grey; opacity: 0.5;">&raquo;&raquo;</span>
+                <span style="color: grey;">Suivant &raquo;</span>
+                <span style="color: grey;">&raquo;&raquo;</span>
             {% endif %}
 
         </div>
