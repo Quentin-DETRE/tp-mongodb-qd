@@ -2,8 +2,11 @@
 
 {% block title %}Création d'un livre{% endblock %}
 {% block content %}
-<p>&larr;&nbsp;<a href="/index.php">Retourner à la liste</a></p>
+<p>&larr;&nbsp;<a href="/index.php?page={{ page }}&search={{ search }}">Retourner à la liste</a></p>
 <form action="/create.php" method="post">
+        <input type="hidden" name="origin_page" value="{{ page }}">
+        <input type="hidden" name="origin_search" value="{{ search }}">
+
         <label for="title">Titre :</label>
         <input type="text" id="titre" name="titre" size="100">
 

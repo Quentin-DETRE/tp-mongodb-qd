@@ -11,10 +11,28 @@ $twig = getTwig();
 $manager = getMongoDbManager();
 
 if (!empty($_POST)) {
-    $manager->selectCollection('tp')->updateOne(['_id' => new ObjectId($_POST["id"])], ['$set' => $_POST]);
-    header('Location: index.php');
+    // Mise à jour BDD
+    $manager->selectCollection('tp')->updateOne(
+        ['_id' => new ObjectId($_POST["id"])],
+        ['$set' => $_POST]
+    );
+
+    // Invalidation du cache Redis
+    $redis = getRedisClient();
+    if ($redis) {
+        $keys = $redis->keys('livres:*');
+        if (!empty($keys)) {
+            $redis->del($keys);
+        }
+    }
+    // Récupération de la page et de la recherche
+    $page = $_POST['origin_page'] ?? 1;
+    $search = $_POST['origin_search'] ?? '';
+
+    // Redirection
+    header("Location: index.php?page=$page&search=$search");
+    exit();
 } else {
-// render template
     try {
         echo $twig->render('update.html.twig');
     } catch (LoaderError|RuntimeError|SyntaxError $e) {

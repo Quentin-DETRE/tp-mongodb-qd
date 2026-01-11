@@ -32,16 +32,26 @@ export default function () {
             'Homepage has content': (r) => r.body.includes('Bibliothèque'),
         });
 
+        // B. Recherche Fréquente
+        let resSearch = http.get(BASE_URL + '/?search=Roman');
+        check(resSearch, {
+            'Search 200': (r) => r.status === 200,
+            'Homepage has content': (r) => r.body.includes('Roman')
+        });
+
+        // C. Pagination (Page 2)
+        let resPage = http.get(BASE_URL + '/?page=2');
+        check(resPage, {
+            'Pagination status is 200': (r) => r.status === 200 ,
+            'Homepage has content': (r) => r.body.includes('Bibliothèque')
+        });
+
         // EXTRACTION D'ID : On cherche un ID de livre dans le HTML pour l'utiliser après
         // On cherche un lien du type <a href="get.php?id=...">
         let match = resIndex.body.match(/get\.php\?id=([a-zA-Z0-9]+)/);
         if (match) {
             bookId = match[1];
         }
-
-        // B. Pagination (Page 2)
-        let resPage = http.get(BASE_URL + '/?page=2');
-        check(resPage, { 'Pagination status is 200': (r) => r.status === 200 });
     });
 
     sleep(1); // Pause utilisateur
@@ -52,7 +62,6 @@ export default function () {
             let resDetail = http.get(BASE_URL + '/get.php?id=' + bookId);
             check(resDetail, {
                 'Detail status is 200': (r) => r.status === 200,
-                // On vérifie qu'on n'a pas une erreur PHP
                 'No error displayed': (r) => !r.body.includes('Fatal error'),
             });
         });
@@ -66,20 +75,15 @@ export default function () {
         let payload = {
             titre: 'K6 AutoTest ' + randomString(5),
             auteur: 'Robot K6',
+            siecle: 21
         };
 
-        // Note: Adaptez les noms des champs (titre, auteur) selon votre formulaire HTML (name="...")
         let resCreate = http.post(BASE_URL + '/create.php', payload);
 
         check(resCreate, {
             'Create status is 200 or 302': (r) => r.status === 200 || r.status === 302,
         });
     });
-
-    // Note sur la suppression :
-    // Dans un test de charge, la suppression est délicate car il faut connaître l'ID
-    // du livre qu'on vient de créer. Sans parsing complexe, on évite de supprimer
-    // des livres au hasard pour ne pas vider la base pendant le test.
 
     sleep(1);
 }

@@ -17,6 +17,8 @@
       <excludeFolder url="file://$MODULE_DIR$/www/vendor/symfony/polyfill-php80" />
       <excludeFolder url="file://$MODULE_DIR$/www/vendor/twig/twig" />
       <excludeFolder url="file://$MODULE_DIR$/www/vendor/vlucas/phpdotenv" />
+      <excludeFolder url="file://$MODULE_DIR$/www/vendor/predis/predis" />
+      <excludeFolder url="file://$MODULE_DIR$/www/vendor/psr/http-message" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

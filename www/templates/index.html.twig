@@ -6,8 +6,16 @@
         <h1>Bibliothèque du Patrimoine</h1>
         <a href="create.php" class="btn-add">Ajouter un livre</a>
     </div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3>Source des données :
+            {% if fromCache is defined and fromCache %}
+                <span style="color: #27ae60; font-weight: bold;">⚡ Redis (Cache)</span>
+            {% else %}
+                <span style="color: #c0392b; font-weight: bold;">💾 MongoDB (Base de données)</span>
+            {% endif %}
+        </h3>
+    </div>
 
-    {# FORMULAIRE DE RECHERCHE #}
     <form action="" method="GET" >
         <label for="search">Rechercher :</label>
         <input type="text" name="search" id="search" value="{{ search }}" placeholder="Titre ou auteur...">
@@ -30,9 +38,9 @@
                 <td>{{ document.titre }}</td>
                 <td>{{ document.auteur }}</td>
                 <td>
-                    <a href="get.php?id={{ document._id }}">voir</a> /
-                    <a href="edit.php?id={{ document._id }}">éditer</a> /
-                    <a href="delete.php?id={{ document._id }}">supprimer</a>
+                    <a href="get.php?id={{ document._id }}&page={{ page }}&search={{ search }}">voir</a> /
+                    <a href="edit.php?id={{ document._id }}&page={{ page }}&search={{ search }}">éditer</a> /
+                    <a href="delete.php?id={{ document._id }}&page={{ page }}&search={{ search }}">supprimer</a>
                 </td>
             </tr>
         {% else %}
@@ -42,13 +50,9 @@
         {% endfor %}
     </table>
 
-    {# PAGINATION  #}
     {% if maxPages > 1 %}
         <div class="pagination" style="margin-top: 20px; text-align: center; display: flex; justify-content: center; gap: 10px;">
 
-            {# On ajoute &search={{ search }} à tous les liens #}
-
-            {# Boutons Précédents #}
             {% if page > 1 %}
                 <a href="?page=1&search={{ search }}">&laquo;&laquo;</a>
                 <a href="?page={{ page - 1 }}&search={{ search }}">&laquo; Précédent</a>
@@ -57,9 +61,7 @@
                 <span style="color: grey;">&laquo; Précédent</span>
             {% endif %}
 
-            {# Formulaire de saut direct #}
             <form action="" method="GET" style="display: inline-block; margin: 0;">
-                {# On garde la recherche active même quand on saute de page #}
                 <input type="hidden" name="search" value="{{ search }}">
 
                 <input type="number" name="page" value="{{ page }}" min="1" max="{{ maxPages }}" style="width: 50px;">
@@ -67,7 +69,6 @@
                 <button type="submit">Aller</button>
             </form>
 
-            {# Boutons Suivants #}
             {% if page < maxPages %}
                 <a href="?page={{ page + 1 }}&search={{ search }}">Suivant &raquo;</a>
                 <a href="?page={{ maxPages }}&search={{ search }}">&raquo;&raquo;</a>

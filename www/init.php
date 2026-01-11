@@ -9,6 +9,7 @@ require_once __DIR__.'/vendor/autoload.php';
 use MongoDB\Database;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
+use Predis\Client as RedisClient;
 
 // env configuration
 (Dotenv\Dotenv::createImmutable(__DIR__))->load();
@@ -26,15 +27,22 @@ function getMongoDbManager(): Database
 }
 
 function getRedisClient() {
-    // Si le cache est désactivé via .env, on peut renvoyer null ou gérer autrement
-    if (getenv('REDIS_ENABLE') !== 'true') {
+    // Si le cache est désactivé via .env
+    if (!isset($_ENV['REDIS_ENABLE']) || ($_ENV['REDIS_ENABLE'] != 1 && $_ENV['REDIS_ENABLE'] !== 'true')) {
         return null;
     }
 
-    return new Predis\Client([
-        'scheme' => 'tcp',
-        'host'   => getenv('REDIS_HOST'),
-        'port'   => getenv('REDIS_PORT'),
-    ]);
+    try {
+        $client = new RedisClient([
+            'scheme' => 'tcp',
+            'host'   => $_ENV['REDIS_HOST'],
+            'port'   => $_ENV['REDIS_PORT'],
+        ]);
+
+        $client->connect();
+        return $client;
+    } catch (Exception $e) {
+        return null;
+    }
 }
 

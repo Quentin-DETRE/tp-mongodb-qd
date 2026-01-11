@@ -23,6 +23,8 @@
       <path value="$PROJECT_DIR$/www/vendor/vlucas/phpdotenv" />
       <path value="$PROJECT_DIR$/www/vendor/symfony/deprecation-contracts" />
       <path value="$PROJECT_DIR$/www/vendor/phpoption/phpoption" />
+      <path value="$PROJECT_DIR$/www/vendor/predis/predis" />
+      <path value="$PROJECT_DIR$/www/vendor/psr/http-message" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="8.2">

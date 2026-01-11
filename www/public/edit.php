@@ -12,9 +12,13 @@ $manager = getMongoDbManager();
 
 $entity = $manager->selectCollection('tp')->findOne(['_id' => new ObjectId($_GET['id'])]);
 
+// gestion des pages et de la recherche
+$page = isset($_GET['page']) ? $_GET['page'] : 1;
+$search = isset($_GET['search']) ? $_GET['search'] : '';
+
 // render template
 try {
-    echo $twig->render('update.html.twig', ['entity' => $entity]);
+    echo $twig->render('update.html.twig', ['entity' => $entity, 'page' => $page, 'search' => $search]);
 } catch (LoaderError|RuntimeError|SyntaxError $e) {
     echo $e->getMessage();
 }
