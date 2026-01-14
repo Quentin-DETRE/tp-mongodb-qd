@@ -8,10 +8,12 @@
     </div>
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h3>Source des données :
-            {% if fromCache is defined and fromCache %}
-                <span style="color: #27ae60; font-weight: bold;">⚡ Redis (Cache)</span>
+            {% if fromCache %}
+                <span style="color: #27ae60;">⚡ Redis</span>
+            {% elseif sourceType == 'ElasticSearch' %}
+                <span style="color: #e67e22;">🔍 ElasticSearch</span>
             {% else %}
-                <span style="color: #c0392b; font-weight: bold;">💾 MongoDB (Base de données)</span>
+                <span style="color: #c0392b;">💾 MongoDB</span>
             {% endif %}
         </h3>
     </div>

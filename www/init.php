@@ -10,6 +10,7 @@ use MongoDB\Database;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 use Predis\Client as RedisClient;
+use Elastic\Elasticsearch\ClientBuilder;
 
 // env configuration
 (Dotenv\Dotenv::createImmutable(__DIR__))->load();
@@ -44,5 +45,10 @@ function getRedisClient() {
     } catch (Exception $e) {
         return null;
     }
+}
+function getElasticSearchClient() {
+    return ClientBuilder::create()
+        ->setHosts([$_ENV['ELASTIC_HOST']])
+        ->build();
 }
 

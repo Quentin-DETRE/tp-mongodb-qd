@@ -6,10 +6,12 @@ use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
 use MongoDB\BSON\Regex;
+use MongoDB\BSON\ObjectId;
 
 $twig = getTwig();
 $manager = getMongoDbManager();
 $redis = getRedisClient();
+$es = getElasticSearchClient();
 
 // Paramètres
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
@@ -22,6 +24,7 @@ $cacheKey = "livres:search=" . md5($search) . ":page=" . $page;
 $list = [];
 $maxPages = 0;
 $fromCache = false;
+$sourceType = 'MongoDB';
 
 // Logique data
 if ($redis && $redis->exists($cacheKey)) {
@@ -29,36 +32,88 @@ if ($redis && $redis->exists($cacheKey)) {
     $data = json_decode($redis->get($cacheKey), true);
     $list = $data['list'];
     $maxPages = $data['maxPages'];
+    $sourceType = 'Redis (Cache)';
     $fromCache = true;
 } else {
     // On lit depuis MongoDB
     $collection = $manager->selectCollection('tp');
+    $idsFromSearch = null;
+    $totalDocuments = 0;
 
-    // Filtre
-    $filter = [];
+    // Cas de recherche avec index
     if (!empty($search)) {
-        $regex = new Regex($search, 'i');
-        $filter = [
-            '$or' => [
-                ['titre' => $regex],
-                ['auteur' => $regex]
-            ]
-        ];
+        try {
+            $sourceType = 'ElasticSearch';
+            $params = [
+                'index' => 'books',
+                'body'  => [
+                    'from' => ($page - 1) * $limit,
+                    'size' => $limit,
+                    'query' => [
+                        'multi_match' => [
+                            'query' => $search,
+                            'fields' => ['titre^2', 'auteur'],
+                            'fuzziness' => 'AUTO'
+                        ]
+                    ]
+                ]
+            ];
+            $results = $es->search($params);
+            $totalDocuments = $results['hits']['total']['value'];
+            $idsFromSearch = [];
+            foreach ($results['hits']['hits'] as $hit) {
+                $idsFromSearch[] = new ObjectId($hit['_id']);
+            }
+
+        } catch (\Exception $e) {
+            // Si erreur, on revient à MongoDB
+            $sourceType = 'MongoDB (Fallback)';
+            $idsFromSearch = null;
+        }
     }
 
-    // Pagination MongoDB
-    $totalDocuments = $collection->countDocuments($filter);
-    $maxPages = ceil($totalDocuments / $limit);
-    if ($page < 1) $page = 1;
-    if ($page > $maxPages && $maxPages > 0) $page = $maxPages;
-    $skip = ($page - 1) * $limit;
+    // Cas recherche MongoDB
+    // Si recherche par index à retourné des trucs
+    if ($idsFromSearch !== null) {
+        // On récupère les éléments via les ID retournés par ElasticSearch
+        if (count($idsFromSearch) > 0) {
+            $cursor = $collection->find(['_id' => ['$in' => $idsFromSearch]]);
+        } else {
+            $cursor = [];
+        }
+        $maxPages = ceil($totalDocuments / $limit);
+    }
+    // Si recherche par index n'a rien retourné
+    else {
+        if ($sourceType !== 'MongoDB (Fallback)') {
+            $sourceType = 'MongoDB';
+        }
+        // Filtre
+        $filter = [];
+        if (!empty($search)) {
+            $regex = new Regex($search, 'i');
+            $filter = [
+                '$or' => [
+                    ['titre' => $regex],
+                    ['auteur' => $regex]
+                ]
+            ];
+        }
 
-    // Récupération
-    $cursor = $collection->find($filter, [
-        'limit' => $limit,
-        'skip'  => $skip,
-        'sort'  => ['titre' => 1]
-    ]);
+        // Pagination MongoDB
+        $totalDocuments = $collection->countDocuments($filter);
+        $maxPages = ceil($totalDocuments / $limit);
+        if ($page < 1) $page = 1;
+        if ($page > $maxPages && $maxPages > 0) $page = $maxPages;
+        $skip = ($page - 1) * $limit;
+
+        // Récupération
+        $cursor = $collection->find($filter, [
+            'limit' => $limit,
+            'skip' => $skip,
+            'sort' => ['titre' => 1]
+        ]);
+    }
 
     $list = [];
     foreach ($cursor as $document) {
@@ -88,7 +143,8 @@ try {
         'page'     => $page,
         'maxPages' => $maxPages,
         'search'   => $search,
-        'fromCache'=> $fromCache
+        'fromCache'=> $fromCache,
+        'sourceType' => $sourceType
     ]);
 } catch (LoaderError|RuntimeError|SyntaxError $e) {
     echo $e->getMessage();

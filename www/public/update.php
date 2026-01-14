@@ -9,20 +9,31 @@ use Twig\Error\SyntaxError;
 
 $twig = getTwig();
 $manager = getMongoDbManager();
+$es = getElasticSearchClient();
 
 if (!empty($_POST)) {
+    $dataToUpdate = [
+        'titre'  => $_POST['titre'],
+        'auteur' => $_POST['auteur'],
+        'siecle' => (int)$_POST['siecle']
+    ];
     // Mise à jour BDD
     $manager->selectCollection('tp')->updateOne(
         ['_id' => new ObjectId($_POST["id"])],
         ['$set' => $_POST]
     );
+    $es->index([
+        'index' => 'books',
+        'id'    => $_POST['id'],
+        'body'  => $dataToUpdate,
+    ]);
 
     // Invalidation du cache Redis
     $redis = getRedisClient();
     if ($redis) {
         $keys = $redis->keys('livres:*');
         if (!empty($keys)) {
-            $redis->del($keys);
+            foreach ($keys as $key) $redis->del($key);
         }
     }
     // Récupération de la page et de la recherche
